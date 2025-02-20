@@ -35,7 +35,7 @@ puppeteer.use(
   console.log("url", url);
   // Launch the browser
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     // executablePath: localChromePath,
     ignoreDefaultArgs: ["--disable-extensions"],
     args: ["--start-maximized", "--no-sandbox", "--disable-setuid-sandbox"],
@@ -80,51 +80,49 @@ puppeteer.use(
   // Wait for navigation to complete
   await new Promise((r) => setTimeout(r, 5000));
 
-  // at this point it will redirect to the url
-  // we need to get the actual response that i get from the url
-  // and log the response like json
+  try {
+    // verify the heading text
+    await page.waitForSelector("#headingText > span:nth-child(1)", {
+      timeout: 5000,
+    });
+    const heading = await page.$("#headingText > span:nth-child(1)");
+    const headingText = await page.evaluate((el) => el?.textContent, heading);
+    console.log("headingText", headingText);
+    if (headingText?.includes("Verification")) {
+      console.log("Verification needed");
+    } else {
+      console.log("No verification needed");
+    }
 
-  await page.screenshot({
-    path: "example4.png",
-  });
-
-  // here it will ask for #headingText > span:nth-child(1)
-  // we need to get the text of the element
-  const headingText = await page.$("#headingText > span:nth-child(1)");
-  const headingTextData = await page.evaluate(
-    (el) => el?.textContent,
-    headingText
-  );
-  console.log("headingText", headingTextData);
-  console.log("Logged in successfully!");
-
-  await page.screenshot({
-    path: "example5.png",
-  });
-
-  // await page.waitForNetworkIdle();
-
-  await page.waitForSelector(
-    ".tyoyWc > div:nth-child(1) > button:nth-child(1)"
-  );
-
-  // click on the button with text "Continue"
-  await page.click(".tyoyWc > div:nth-child(1) > button:nth-child(1)");
+    // continue button
+    await page.waitForSelector(
+      ".tyoyWc > div:nth-child(1) > button:nth-child(1)"
+    );
+  } catch (error) {
+    console.log("No verification needed");
+    await page.waitForSelector(
+      ".tyoyWc > div:nth-child(1) > button:nth-child(1)"
+    );
+  }
 
   await new Promise((r) => setTimeout(r, 5000));
 
-  await page.screenshot({
-    path: "example6.png",
-  });
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes("localhost:3000") && response.status() === 200
+  );
 
-  // wait for the url to change
-  await page.waitForNavigation({
-    waitUntil: "networkidle0",
-  });
+  await page.click(".tyoyWc > div:nth-child(1) > button:nth-child(1)");
+  console.log("Clicked continue button, waiting for redirect...");
 
-  // log the url
-  const urlData = await page.url();
-  console.log("url", urlData);
+  const response = await responsePromise;
+
+  // Verify response status and content
+  if (!response.ok()) {
+    console.log(`Redirect failed with status: ${response.status()}`);
+  }
+  console.log("Redirected to localhost:3000");
+  console.log(response.url());
 
   // Close the browser
   await browser.close();
