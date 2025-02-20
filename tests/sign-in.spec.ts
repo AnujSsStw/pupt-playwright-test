@@ -13,8 +13,8 @@ test.describe("Sing in on home page", async () => {
     stealthPlugin.enabledEvasions.delete("media.codecs");
     chromium.use(stealthPlugin);
     chromium.use(AnonymizeUAPlugin());
-    const email = "";
-    const password = "";
+    const email = process.env.EMAIL || "";
+    const password = process.env.PASSWORD || "";
 
     // const calendarauth = 'false';
     const localhost = "http://localhost:3000";

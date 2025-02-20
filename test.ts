@@ -17,8 +17,8 @@ puppeteer.use(
 );
 
 (async () => {
-  const email = "";
-  const password = "";
+  const email = process.env.EMAIL || "";
+  const password = process.env.PASSWORD || "";
 
   // const calendarauth = 'false';
   const localhost = "http://localhost:3000";
